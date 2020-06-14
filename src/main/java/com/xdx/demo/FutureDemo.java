@@ -1,17 +1,30 @@
 package com.xdx.demo;
 
+import com.xdx.demo.cache.ICache;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class FutureDemo {
-    private ExecutorService executor= Executors.newSingleThreadExecutor();
+    private ExecutorService executor= Executors.newFixedThreadPool(2);
+    private ExecutorService executor2 = Executors.newSingleThreadExecutor();
 
     public Future<Integer> calculate(Integer input) {
         return executor.submit(() -> {
             Thread.sleep(6000);
             Integer result= input*input;
+            if (input == 2) {
+                executor2.execute(()->{
+                    try {
+                        Thread.sleep(6000);
+                        System.out.println(Thread.currentThread().getName()+"执行存库操作");
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
             System.out.println("当前线程："+Thread.currentThread().getName()+",输入："+input+"计算结果:"+result);
             return result;
         });
@@ -22,7 +35,7 @@ public class FutureDemo {
         long startTime=System.currentTimeMillis();
         while (!(future1.isDone()&&future2.isDone())) {
 //            System.out.println("计算中");
-            if(System.currentTimeMillis()-startTime>10000){
+            if(System.currentTimeMillis()-startTime>2000){
                 System.out.println("主线程"+Thread.currentThread().getName()+"程序超时");
                 throw new RuntimeException("超时了");
             }
